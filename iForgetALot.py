@@ -3,10 +3,11 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 backend = default_backend()
+salt = 42
 kdf = PBKDF2HMAC(
     algorithm=hashes.SHA512(),
     length=256,
-    salt=42,
+    salt=salt,
     iterations=9001,
     backend=backend
 )
@@ -58,14 +59,14 @@ def initial_registration():
             print("Generating key")
             # may need to convert inp to bytes
             key = kdf.derive(inp)
-            mass_pass_file.write(42+key)
+            mass_pass_file.write(salt+key)
 
 
 def check_master_password(master_password):
     # TODO finish implementation
     print("checking master password")
     mass_pass_file = open("master_passwd", 'r+b')
-    salt = mass_pass_file.read(len(42))
+    ret_salt = mass_pass_file.read(len(salt))
     key = mass_pass_file.read()
     if kdf.verify(mass_pass,key):
         print("Password accepted")
