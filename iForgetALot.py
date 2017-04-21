@@ -1,7 +1,10 @@
+import gc
 import os.path
+
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
+
 backend = default_backend()
 salt = bytes([42])
 kdf = PBKDF2HMAC(
@@ -19,11 +22,19 @@ def check_integrity():
 
 
 def register_account(username, password, domain):
-    # register a new account
+    """Register a new account"""
     # TODO finish implementation
-    pass_file = open("passwd_file", 'w+b')
-    pass_file.write(bytearray(username, 'utf-8') + ' ' + bytearray(password, 'utf-8') + ' ' + bytearray(domain, 'utf-8'))
-    print("Registering a new account.")
+    with open("passwd_file", 'wb') as pass_file:
+        print("Registering a new account.")
+        pwfData = bytearray(username, 'utf-8').append(bytearray(' ', 'utf-8')).append(
+            bytearray(password, 'utf-8').append(bytearray(' ', 'utf-8'))).append(bytearray(domain, 'utf-8'))
+        pass_file.write(pwfData)
+        del username
+        del password
+        del domain
+        del pwfData
+        gc.collect()
+        print('Registration and cleanup complete.')
 
 
 def delete_account(username, password, domain):
@@ -100,9 +111,7 @@ def display_menu():
 if __name__ == '__main__':
     # check for passwd_file and master_passwd
     # if they exist, ask for and check master password, else use initial_registration()
-    if not os.path.isfile("passwd_file"):
-        initial_registration()
-    elif not os.path.isfile("master_passwd"):
+    if not os.path.isfile("passwd_file") or not os.path.isfile("master_passwd"):
         initial_registration()
     else:
         check = False
