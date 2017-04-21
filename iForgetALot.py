@@ -26,9 +26,9 @@ def register_account(username, password, domain):
     # TODO finish implementation
     with open("passwd_file", 'wb') as pass_file:
         print("Registering a new account.")
-        pwfData = bytearray(username, 'utf-8').append(bytearray(' ', 'utf-8')).append(
-            bytearray(password, 'utf-8').append(bytearray(' ', 'utf-8'))).append(bytearray(domain, 'utf-8'))
-        pass_file.write(pwfData)
+        pwfData = username + ' ' + password + ' ' + domain
+        encoded = pwfData.encode()
+        pass_file.write(encoded)
         del username
         del password
         del domain
@@ -85,12 +85,12 @@ def check_master_password(master_password):
         key = keyfiledata[len(salt):]
         # key = mass_pass_file.read()
         master_password = bytes(master_password, 'utf-8')
-        if kdf.verify(master_password, key):
+        try:
+            kdf.verify(master_password, key)
             print("Password accepted")
-        else:
+        except:
             print("WRONG MASTER PASSWORD!")
             exit()
-
 
 def user_input_is_good(inp):
     # TODO finish implementation
