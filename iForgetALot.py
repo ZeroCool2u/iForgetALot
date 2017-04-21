@@ -3,7 +3,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 backend = default_backend()
-salt = 42
+salt = bytes([42])
 kdf = PBKDF2HMAC(
     algorithm=hashes.SHA512(),
     length=256,
@@ -55,6 +55,7 @@ def initial_registration():
     while not check:
         inp = input("Please enter your desired master password: ")
         check = user_input_is_good(inp)
+        inp = bytes(inp, 'utf-8')
         if check:
             print("Generating key")
             # may need to convert inp to bytes
