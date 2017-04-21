@@ -22,7 +22,7 @@ backend = default_backend()
 salt = bytes([42])
 kdf = PBKDF2HMAC(
     algorithm=hashes.SHA512(),
-    length=256,
+    length=32,
     salt=salt,
     iterations=100000,
     backend=backend
@@ -107,8 +107,11 @@ class CTRFernet(object):
 
         h = HMAC(self._signing_key, hashes.SHA512(), backend=self._backend)
         h.update(data[:-32])
+        d = data[:-32]
+        print(len(d))
+        print(len(h.finalize()))
         try:
-            h.verify(data[-32:])
+            h.verify(d)
         except InvalidSignature:
             raise InvalidToken
 
@@ -152,9 +155,27 @@ class MultiFernet(object):
                 pass
         raise InvalidToken
 
+
+def retrieve_key():
+    with open("master_passwd", 'rb') as  mass_pass_file:
+        keyfiledata = mass_pass_file.read()
+        old_salt = keyfiledata[:len(salt)]
+        key = keyfiledata[len(salt):]
+    return key
+
 def check_integrity():
     # check integrity of files
     # TODO finish implementation
+    with open("passwd_file", 'rb') as pass_file:
+        key = retrieve_key()
+        encoded = base64.urlsafe_b64encode(key)
+        f = CTRFernet(encoded)
+        pf = pass_file.read()
+        print(str(pf))
+        encryptedToken = f.encrypt(pf)
+        print(encryptedToken)
+        decrypted = f.decrypt(encryptedToken)
+        print(decrypted)
     print("Checking file integrity.")
 
 
@@ -215,19 +236,14 @@ def initial_registration():
 def check_master_password(master_password):
     # TODO finish implementation
     print("checking master password")
-    with open("master_passwd", 'rb') as  mass_pass_file:
-        keyfiledata = mass_pass_file.read()
-        old_salt = keyfiledata[:len(salt)]
-        # ret_salt = mass_pass_file.read(len(salt))
-        key = keyfiledata[len(salt):]
-        # key = mass_pass_file.read()
-        master_password = bytes(master_password, 'utf-8')
-        try:
-            kdf.verify(master_password, key)
-            print("Password accepted")
-        except:
-            print("WRONG MASTER PASSWORD!")
-            exit()
+    key = retrieve_key()
+    master_password = bytes(master_password, 'utf-8')
+    try:
+        kdf.verify(master_password, key)
+        print("Password accepted")
+    except:
+        print("WRONG MASTER PASSWORD!")
+        exit()
 
 def user_input_is_good(inp):
     # TODO finish implementation
