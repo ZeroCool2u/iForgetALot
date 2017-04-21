@@ -1,4 +1,15 @@
 import os.path
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
+backend = default_backend()
+kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA512(),
+    length=256,
+    salt=42,
+    iterations=9001,
+    backend=backend
+)
 
 def check_integrity():
     # check integrity of files
@@ -38,12 +49,29 @@ def exit_manager():
 
 def initial_registration():
     # TODO finish implementation
-    print("Generating key")
+    mass_pass_file = open("master_passwd", 'w+b')
+    check = False
+    while not check:
+        inp = input("Please enter your desired master password: ")
+        check = user_input_is_good(inp)
+        if check:
+            print("Generating key")
+            # may need to convert inp to bytes
+            key = kdf.derive(inp)
+            mass_pass_file.write(42+key)
 
 
 def check_master_password(master_password):
     # TODO finish implementation
     print("checking master password")
+    mass_pass_file = open("master_passwd", 'r+b')
+    salt = mass_pass_file.read(len(42))
+    key = mass_pass_file.read()
+    if kdf.verify(mass_pass,key):
+        print("Password accepted")
+    else:
+        print("WRONG MASTER PASSWORD!")
+        exit()
 
 
 def user_input_is_good(inp):
@@ -76,7 +104,7 @@ if __name__ == '__main__':
         while not check:
             mass_pass = input("Please input your master password: ")
             check = user_input_is_good(mass_pass)
-            if check == True:
+            if check:
                 check_master_password(mass_pass)
 
     repeat = True
