@@ -21,6 +21,8 @@ def check_integrity():
 def register_account(username, password, domain):
     # register a new account
     # TODO finish implementation
+    pass_file = open("passwd_file", 'w+b')
+    pass_file.write(bytearray(username, 'utf-8') + ' ' + bytearray(password, 'utf-8') + ' ' + bytearray(domain, 'utf-8'))
     print("Registering a new account.")
 
 
@@ -69,7 +71,8 @@ def check_master_password(master_password):
     mass_pass_file = open("master_passwd", 'r+b')
     ret_salt = mass_pass_file.read(len(salt))
     key = mass_pass_file.read()
-    if kdf.verify(mass_pass,key):
+    master_password = bytes(master_password, 'utf-8')
+    if kdf.verify(master_password,key):
         print("Password accepted")
     else:
         print("WRONG MASTER PASSWORD!")
