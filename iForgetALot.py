@@ -63,31 +63,33 @@ def exit_manager():
 
 def initial_registration():
     # TODO finish implementation
-    mass_pass_file = open("master_passwd", 'w+b')
-    check = False
-    while not check:
-        inp = input("Please enter your desired master password: ")
-        check = user_input_is_good(inp)
-        inp = bytes(inp, 'utf-8')
-        if check:
-            print("Generating key")
-            # may need to convert inp to bytes
-            key = kdf.derive(inp)
-            mass_pass_file.write(salt+key)
+    with open("master_passwd", 'wb') as mass_pass_file:
+        check = False
+        while not check:
+            inp = input("Please enter your desired master password: ")
+            check = user_input_is_good(inp)
+            inp = bytes(inp, 'utf-8')
+            if check:
+                print("Generating key")
+                key = kdf.derive(inp)
+                mass_pass_file.write(salt + key)
 
 
 def check_master_password(master_password):
     # TODO finish implementation
     print("checking master password")
-    mass_pass_file = open("master_passwd", 'r+b')
-    ret_salt = mass_pass_file.read(len(salt))
-    key = mass_pass_file.read()
-    master_password = bytes(master_password, 'utf-8')
-    if kdf.verify(master_password,key):
-        print("Password accepted")
-    else:
-        print("WRONG MASTER PASSWORD!")
-        exit()
+    with open("master_passwd", 'rb') as  mass_pass_file:
+        keyfiledata = mass_pass_file.read()
+        old_salt = keyfiledata[:len(salt)]
+        # ret_salt = mass_pass_file.read(len(salt))
+        key = keyfiledata[len(salt):]
+        # key = mass_pass_file.read()
+        master_password = bytes(master_password, 'utf-8')
+        if kdf.verify(master_password, key):
+            print("Password accepted")
+        else:
+            print("WRONG MASTER PASSWORD!")
+            exit()
 
 
 def user_input_is_good(inp):
