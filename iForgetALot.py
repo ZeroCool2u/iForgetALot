@@ -106,17 +106,14 @@ class CTRFernet(object):
                 raise InvalidToken
 
         h = HMAC(self._signing_key, hashes.SHA512(), backend=self._backend)
-        h.update(data[:-32])
-        d = data[:-32]
-        print(len(d))
-        print(len(h.finalize()))
+        h.update(data[:-64])
         try:
-            h.verify(d)
+            h.verify(data[-64:])
         except InvalidSignature:
             raise InvalidToken
 
         iv = data[9:25]
-        ciphertext = data[25:-32]
+        ciphertext = data[25:-64]
         decryptor = Cipher(
             algorithms.AES(self._encryption_key), modes.CTR(iv), self._backend
         ).decryptor()
@@ -173,7 +170,6 @@ def check_integrity():
         pf = pass_file.read()
         print(str(pf))
         encryptedToken = f.encrypt(pf)
-        print(encryptedToken)
         decrypted = f.decrypt(encryptedToken)
         print(decrypted)
     print("Checking file integrity.")
