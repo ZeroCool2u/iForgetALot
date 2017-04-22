@@ -8,7 +8,7 @@ import os
 import os.path
 import struct
 import time
-
+from collections import defaultdict
 import six
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
@@ -18,6 +18,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.hmac import HMAC
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+db = defaultdict()
+f = None
+decrypted = None
 backend = default_backend()
 salt = bytes([42])
 kdf = PBKDF2HMAC(
@@ -178,17 +181,13 @@ def check_integrity():
 def register_account(file, username, password, domain):
     """Register a new account"""
     # TODO finish implementation
-    with open("passwd_file", 'wb') as pass_file:
-        print("Registering a new account.")
-        pwfData = username + ' ' + password + ' ' + domain
-        encoded = pwfData.encode()
-        pass_file.write(encoded)
-        del username
-        del password
-        del domain
-        del pwfData
-        gc.collect()
-        print('Registration and cleanup complete.')
+    print("Registering a new account.")
+    db[domain] = (username, password)
+    del username
+    del password
+    del domain
+    gc.collect()
+    print('Registration and cleanup complete.')
 
 
 def delete_account(file, username, password, domain):
@@ -209,10 +208,17 @@ def get_password(file, domain):
     print("Retrieving password.")
 
 
-def exit_manager():
+def exit_manager(file, f):
     # exit the program
     # TODO finish implementation
     # TODO encrypt file
+    if f == None:
+        exit()
+    else:
+        with open("passwd_file", 'wb') as pass_file:
+            # encrypted = f.encrypt(file)
+            encrypted = f.encrypt("TEST")
+            pass_file.write(encrypted)
     print("Exiting program. Goodbye.")
 
 
@@ -265,9 +271,18 @@ def display_menu():
     print("6. Exit")
 
 
+def file_decryptor():
+    with open("passwd_file", 'rb') as pass_file:
+        key = retrieve_key()
+        encoded = base64.urlsafe_b64encode(key)
+        f = CTRFernet(encoded)
+        pf = pass_file.read()
+        return f.decrypt(pf), f
+
 if __name__ == '__main__':
     # check for passwd_file and master_passwd
     # if they exist, ask for and check master password, else use initial_registration()
+    firstTimeFlag = False
     if not os.path.isfile("passwd_file") or not os.path.isfile("master_passwd"):
         initial_registration()
         firstTimeFlag = True
@@ -280,12 +295,7 @@ if __name__ == '__main__':
                 check_master_password(mass_pass)
 
     if not firstTimeFlag:
-        with open("passwd_file", 'rb') as pass_file:
-            key = retrieve_key()
-            encoded = base64.urlsafe_b64encode(key)
-            f = CTRFernet(encoded)
-            pf = pass_file.read()
-            decrypted = f.decrypt(pf)
+        decrypted, f = file_decryptor()
 
     repeat = True
 
@@ -340,6 +350,6 @@ if __name__ == '__main__':
                         print("Problem with input, possible attack detected, please try again")
             elif user_input == '6':
                 repeat = False
-                exit_manager()
+                exit_manager(db, f)
             else:
                 input("Selection error. Press any key to try again.")
