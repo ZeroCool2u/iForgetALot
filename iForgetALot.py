@@ -175,7 +175,7 @@ def check_integrity():
     print("Checking file integrity.")
 
 
-def register_account(username, password, domain):
+def register_account(file, username, password, domain):
     """Register a new account"""
     # TODO finish implementation
     with open("passwd_file", 'wb') as pass_file:
@@ -191,19 +191,19 @@ def register_account(username, password, domain):
         print('Registration and cleanup complete.')
 
 
-def delete_account(username, password, domain):
+def delete_account(file, username, password, domain):
     # delete account
     # TODO finish implementation
     print("Deleting account.")
 
 
-def change_account(username, old_password, new_password, domain):
+def change_account(file, username, old_password, new_password, domain):
     # change the password of an account already in the manager
     # TODO finish implementation
     print("Changing password in account.")
 
 
-def get_password(domain):
+def get_password(file, domain):
     # get a password for an account in the manager
     # TODO finish implementation
     print("Retrieving password.")
@@ -212,11 +212,13 @@ def get_password(domain):
 def exit_manager():
     # exit the program
     # TODO finish implementation
+    # TODO encrypt file
     print("Exiting program. Goodbye.")
 
 
 def initial_registration():
     # TODO finish implementation
+    # creates master_passwd file
     with open("master_passwd", 'wb') as mass_pass_file:
         check = False
         while not check:
@@ -227,6 +229,10 @@ def initial_registration():
                 print("Generating key")
                 key = kdf.derive(inp)
                 mass_pass_file.write(salt + key)
+    # creates passwd_file
+    with open("passwd_file", 'wb') as pass_file:
+        pass
+
 
 
 def check_master_password(master_password):
@@ -264,6 +270,7 @@ if __name__ == '__main__':
     # if they exist, ask for and check master password, else use initial_registration()
     if not os.path.isfile("passwd_file") or not os.path.isfile("master_passwd"):
         initial_registration()
+        firstTimeFlag = True
     else:
         check = False
         while not check:
@@ -272,57 +279,67 @@ if __name__ == '__main__':
             if check:
                 check_master_password(mass_pass)
 
+    if not firstTimeFlag:
+        with open("passwd_file", 'rb') as pass_file:
+            key = retrieve_key()
+            encoded = base64.urlsafe_b64encode(key)
+            f = CTRFernet(encoded)
+            pf = pass_file.read()
+            decrypted = f.decrypt(pf)
+
     repeat = True
 
-    while repeat:
-        check = False
-        display_menu()
+    with open("passwd_file", 'wb') as pass_file:
 
-        user_input = input("Enter the function you wish to use [1-6]: ")
+        while repeat:
+            check = False
+            display_menu()
 
-        if user_input == '1':
-            check_integrity()
-        elif user_input == '2':
-            # print("Please enter username, password, and domain, separated by spaces")
-            while not check:
-                inp = input("Please enter username, password, and domain, separated by spaces: ")
-                usename_in, passwd_in, dom_in = inp.split(' ')
-                check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
-                if check:
-                    register_account(usename_in, passwd_in, dom_in)
-                else:
-                    print("Problem with input, possible attack detected, please try again")
-        elif user_input == '3':
-            # print("Please enter username, password, and domain, separated by spaces")
-            while not check:
-                inp = input("Please enter username, password, and domain, separated by spaces: ")
-                usename_in, passwd_in, dom_in = inp.split(' ')
-                check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
-                if check:
-                    delete_account(usename_in, passwd_in, dom_in)
-                else:
-                    print("Problem with input, possible attack detected, please try again")
-        elif user_input == '4':
-            # print("Please enter username, old password, new password, and domain, separated by spaces")
-            while not check:
-                inp = input("Please enter username, old password, new password, and domain, separated by spaces: ")
-                usename_in, old_passwd, new_passwd, dom_in = inp.split(' ')
-                check = user_input_is_good(usename_in) and user_input_is_good(old_passwd) and user_input_is_good(new_passwd) and user_input_is_good(dom_in)
-                if check:
-                    change_account(usename_in, old_passwd, new_passwd, dom_in)
-                else:
-                    print("Problem with input, possible attack detected, please try again")
-        elif user_input == '5':
-            # print("please enter domain")
-            while not check:
-                dom_in = input("please enter domain: ")
-                check = user_input_is_good(dom_in)
-                if check:
-                    get_password(dom_in)
-                else:
-                    print("Problem with input, possible attack detected, please try again")
-        elif user_input == '6':
-            repeat = False
-            exit_manager()
-        else:
-            input("Selection error. Press any key to try again.")
+            user_input = input("Enter the function you wish to use [1-6]: ")
+
+            if user_input == '1':
+                check_integrity()
+            elif user_input == '2':
+                # print("Please enter username, password, and domain, separated by spaces")
+                while not check:
+                    inp = input("Please enter username, password, and domain, separated by spaces: ")
+                    usename_in, passwd_in, dom_in = inp.split(' ')
+                    check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
+                    if check:
+                        register_account(decrypted, usename_in, passwd_in, dom_in)
+                    else:
+                        print("Problem with input, possible attack detected, please try again")
+            elif user_input == '3':
+                # print("Please enter username, password, and domain, separated by spaces")
+                while not check:
+                    inp = input("Please enter username, password, and domain, separated by spaces: ")
+                    usename_in, passwd_in, dom_in = inp.split(' ')
+                    check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
+                    if check:
+                        delete_account(decrypted, usename_in, passwd_in, dom_in)
+                    else:
+                        print("Problem with input, possible attack detected, please try again")
+            elif user_input == '4':
+                # print("Please enter username, old password, new password, and domain, separated by spaces")
+                while not check:
+                    inp = input("Please enter username, old password, new password, and domain, separated by spaces: ")
+                    usename_in, old_passwd, new_passwd, dom_in = inp.split(' ')
+                    check = user_input_is_good(usename_in) and user_input_is_good(old_passwd) and user_input_is_good(new_passwd) and user_input_is_good(dom_in)
+                    if check:
+                        change_account(decrypted, usename_in, old_passwd, new_passwd, dom_in)
+                    else:
+                        print("Problem with input, possible attack detected, please try again")
+            elif user_input == '5':
+                # print("please enter domain")
+                while not check:
+                    dom_in = input("please enter domain: ")
+                    check = user_input_is_good(dom_in)
+                    if check:
+                        get_password(decrypted, dom_in)
+                    else:
+                        print("Problem with input, possible attack detected, please try again")
+            elif user_input == '6':
+                repeat = False
+                exit_manager()
+            else:
+                input("Selection error. Press any key to try again.")
