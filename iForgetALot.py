@@ -9,6 +9,7 @@ import os.path
 import struct
 import time
 from collections import defaultdict
+
 import six
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
@@ -19,7 +20,6 @@ from cryptography.hazmat.primitives.hmac import HMAC
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 db = defaultdict()
-f = None
 decrypted = None
 backend = default_backend()
 salt = bytes([42])
@@ -217,7 +217,7 @@ def exit_manager(file, f):
     else:
         with open("passwd_file", 'wb') as pass_file:
             # encrypted = f.encrypt(file)
-            encrypted = f.encrypt("TEST")
+            encrypted = f.encrypt(b"TEST")
             pass_file.write(encrypted)
     print("Exiting program. Goodbye.")
 
@@ -271,13 +271,10 @@ def display_menu():
     print("6. Exit")
 
 
-def file_decryptor():
+def file_decryptor(f):
     with open("passwd_file", 'rb') as pass_file:
-        key = retrieve_key()
-        encoded = base64.urlsafe_b64encode(key)
-        f = CTRFernet(encoded)
         pf = pass_file.read()
-        return f.decrypt(pf), f
+        return f.decrypt(pf)
 
 if __name__ == '__main__':
     # check for passwd_file and master_passwd
@@ -294,8 +291,12 @@ if __name__ == '__main__':
             if check:
                 check_master_password(mass_pass)
 
+    key = retrieve_key()
+    encoded = base64.urlsafe_b64encode(key)
+    f = CTRFernet(encoded)
+
     if not firstTimeFlag:
-        decrypted, f = file_decryptor()
+        decrypted = file_decryptor(f)
 
     repeat = True
 
