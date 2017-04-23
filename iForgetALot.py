@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import atexit
 import base64
 import binascii
 ######################################
@@ -200,7 +201,7 @@ def retrieve_key():
     return key
 
 
-def register_account(file, username, password, domain):
+def register_account(username, password, domain):
     """Register a new account"""
     # TODO finish implementation
     if domain in db:
@@ -215,7 +216,7 @@ def register_account(file, username, password, domain):
         # print('Registration and cleanup complete.')
 
 
-def delete_account(file, username, password, domain):
+def delete_account(username, password, domain):
     # delete account
     if domain in db:
         del db[domain]
@@ -225,7 +226,7 @@ def delete_account(file, username, password, domain):
         print("USER ACCOUNT DOES NOT EXIST!")
 
 
-def change_account(file, username, old_password, new_password, domain):
+def change_account(username, old_password, new_password, domain):
     # change the password of an account already in the manager
     # TODO finish implementation
     if domain in db:
@@ -242,7 +243,7 @@ def change_account(file, username, old_password, new_password, domain):
         print("USER ACCOUNT DOES NOT EXIST!")
 
 
-def get_password(file, domain):
+def get_password(domain):
     # get a password for an account in the manager
     print("Retrieving password.")
     if domain in db:
@@ -351,6 +352,9 @@ if __name__ == '__main__':
 
     if not firstTimeFlag:
         decrypted, pf = file_decryptor(f)
+        db = decrypted
+
+    atexit.register(exit_manager, file=db, f=f)
 
     repeat = True
 
@@ -363,7 +367,10 @@ if __name__ == '__main__':
             user_input = input("Enter the function you wish to use [1-6]: ")
 
             if user_input == '1':
-                check_integrity(f, pf)
+                if firstTimeFlag:
+                    print('This function cannot be called upon first execution. Restart the program first.')
+                else:
+                    check_integrity(f, pf)
             elif user_input == '2':
                 # print("Please enter username, password, and domain, separated by spaces")
                 while not check:
@@ -371,7 +378,7 @@ if __name__ == '__main__':
                     usename_in, passwd_in, dom_in = inp.split(' ')
                     check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
                     if check:
-                        register_account(decrypted, usename_in, passwd_in, dom_in)
+                        register_account(usename_in, passwd_in, dom_in)
                     else:
                         print("Problem with input, possible attack detected, please try again")
             elif user_input == '3':
@@ -381,7 +388,7 @@ if __name__ == '__main__':
                     usename_in, passwd_in, dom_in = inp.split(' ')
                     check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
                     if check:
-                        delete_account(decrypted, usename_in, passwd_in, dom_in)
+                        delete_account(usename_in, passwd_in, dom_in)
                     else:
                         print("Problem with input, possible attack detected, please try again")
             elif user_input == '4':
@@ -391,7 +398,7 @@ if __name__ == '__main__':
                     usename_in, old_passwd, new_passwd, dom_in = inp.split(' ')
                     check = user_input_is_good(usename_in) and user_input_is_good(old_passwd) and user_input_is_good(new_passwd) and user_input_is_good(dom_in)
                     if check:
-                        change_account(decrypted, usename_in, old_passwd, new_passwd, dom_in)
+                        change_account(usename_in, old_passwd, new_passwd, dom_in)
                     else:
                         print("Problem with input, possible attack detected, please try again")
             elif user_input == '5':
@@ -400,12 +407,12 @@ if __name__ == '__main__':
                     dom_in = input("please enter domain: ")
                     check = user_input_is_good(dom_in)
                     if check:
-                        get_password(decrypted, dom_in)
+                        get_password(dom_in)
                     else:
                         print("Problem with input, possible attack detected, please try again")
             elif user_input == '6':
                 repeat = False
-                exit_manager(db, f)
+                exit(0)
             elif user_input == '7':
                 print('THIS IS AN EASTER EGG. HOWEVER IT IS NOT CHOCOLATE AND THERE IS NO EGG. SORRY.')
             else:
