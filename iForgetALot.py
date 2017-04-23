@@ -181,28 +181,43 @@ def check_integrity():
 def register_account(file, username, password, domain):
     """Register a new account"""
     # TODO finish implementation
-    print("Registering a new account.")
-    db[domain] = (username, password)
-    del username
-    del password
-    del domain
-    gc.collect()
-    print('Registration and cleanup complete.')
+    if domain in db:
+        print("USER ACCOUNT ALREADY EXISTS!")
+    else:
+        # print("Registering a new account.")
+        db[domain] = (username, password)
+        del username
+        del password
+        del domain
+        gc.collect()
+        # print('Registration and cleanup complete.')
 
 
 def delete_account(file, username, password, domain):
     # delete account
     if domain in db:
         del db[domain]
-        print('Site ' + domain + ' deleted.')
+        # print('Site ' + domain + ' deleted.')
     else:
-        print('Error: Site ' + domain + ' not found.')
+        # print('Error: Site ' + domain + ' not found.')
+        print("USER ACCOUNT DOES NOT EXIST!")
 
 
 def change_account(file, username, old_password, new_password, domain):
     # change the password of an account already in the manager
     # TODO finish implementation
-    print("Changing password in account.")
+    if domain in db:
+        print("Changing password in account.")
+        db[domain] = (username, new_password)
+        del username
+        del new_password
+        del old_password
+        del domain
+        gc.collect()
+        print('Change and cleanup complete.')
+    else:
+        print('Error: Site ' + domain + ' not found.')
+        print("USER ACCOUNT DOES NOT EXIST!")
 
 
 def get_password(file, domain):
@@ -213,6 +228,7 @@ def get_password(file, domain):
         print('username ' + un + ' password ' + pw)
     else:
         print('Error: Site ' + domain + ' not found.')
+        print("USER ACCOUNT DOES NOT EXIST!")
 
 
 def exit_manager(file, f):
