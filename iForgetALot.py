@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import atexit
 import base64
 import binascii
-######################################
 import gc
 import os
 import os.path
@@ -219,10 +218,18 @@ def register_account(username, password, domain):
 def delete_account(username, password, domain):
     # delete account
     if domain in db:
-        del db[domain]
-        # print('Site ' + domain + ' deleted.')
+        (un, pw) = db[domain]
+        if username == un and password == pw:
+            del db[domain]
+            del username
+            del password
+            del domain
+            gc.collect()
     else:
-        # print('Error: Site ' + domain + ' not found.')
+        del username
+        del password
+        del domain
+        gc.collect()
         print("USER ACCOUNT DOES NOT EXIST!")
 
 
@@ -230,16 +237,23 @@ def change_account(username, old_password, new_password, domain):
     # change the password of an account already in the manager
     # TODO finish implementation
     if domain in db:
-        print("Changing password in account.")
-        db[domain] = (username, new_password)
+        (un, pw) = db[domain]
+        if username == un and old_password == pw:
+            print("Changing password in account.")
+            db[domain] = (username, new_password)
+            del username
+            del un
+            del pw
+            del new_password
+            del old_password
+            del domain
+            gc.collect()
+    else:
         del username
         del new_password
         del old_password
         del domain
         gc.collect()
-        print('Change and cleanup complete.')
-    else:
-        print('Error: Site ' + domain + ' not found.')
         print("USER ACCOUNT DOES NOT EXIST!")
 
 
@@ -375,41 +389,56 @@ if __name__ == '__main__':
                 # print("Please enter username, password, and domain, separated by spaces")
                 while not check:
                     inp = input("Please enter username, password, and domain, separated by spaces: ")
-                    usename_in, passwd_in, dom_in = inp.split(' ')
-                    check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
-                    if check:
-                        register_account(usename_in, passwd_in, dom_in)
-                    else:
-                        print("Problem with input, possible attack detected, please try again")
+                    try:
+                        usename_in, passwd_in, dom_in = inp.split(' ')
+                        check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(
+                            dom_in)
+                        if check:
+                            register_account(usename_in, passwd_in, dom_in)
+                        else:
+                            print("Problem with input, possible attack detected, please try again")
+                    except:
+                        print('Unexpected input detected! Retry.')
             elif user_input == '3':
                 # print("Please enter username, password, and domain, separated by spaces")
                 while not check:
                     inp = input("Please enter username, password, and domain, separated by spaces: ")
-                    usename_in, passwd_in, dom_in = inp.split(' ')
-                    check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(dom_in)
-                    if check:
-                        delete_account(usename_in, passwd_in, dom_in)
-                    else:
-                        print("Problem with input, possible attack detected, please try again")
+                    try:
+                        usename_in, passwd_in, dom_in = inp.split(' ')
+                        check = user_input_is_good(usename_in) and user_input_is_good(passwd_in) and user_input_is_good(
+                            dom_in)
+                        if check:
+                            delete_account(usename_in, passwd_in, dom_in)
+                        else:
+                            print("Problem with input, possible attack detected, please try again")
+                    except:
+                        print('Unexpected input detected! Retry.')
             elif user_input == '4':
                 # print("Please enter username, old password, new password, and domain, separated by spaces")
                 while not check:
                     inp = input("Please enter username, old password, new password, and domain, separated by spaces: ")
-                    usename_in, old_passwd, new_passwd, dom_in = inp.split(' ')
-                    check = user_input_is_good(usename_in) and user_input_is_good(old_passwd) and user_input_is_good(new_passwd) and user_input_is_good(dom_in)
-                    if check:
-                        change_account(usename_in, old_passwd, new_passwd, dom_in)
-                    else:
-                        print("Problem with input, possible attack detected, please try again")
+                    try:
+                        usename_in, old_passwd, new_passwd, dom_in = inp.split(' ')
+                        check = user_input_is_good(usename_in) and user_input_is_good(
+                            old_passwd) and user_input_is_good(new_passwd) and user_input_is_good(dom_in)
+                        if check:
+                            change_account(usename_in, old_passwd, new_passwd, dom_in)
+                        else:
+                            print("Problem with input, possible attack detected, please try again")
+                    except:
+                        print('Unexpected input detected! Retry.')
             elif user_input == '5':
                 # print("please enter domain")
                 while not check:
-                    dom_in = input("please enter domain: ")
-                    check = user_input_is_good(dom_in)
-                    if check:
-                        get_password(dom_in)
-                    else:
-                        print("Problem with input, possible attack detected, please try again")
+                    try:
+                        dom_in = input("please enter domain: ")
+                        check = user_input_is_good(dom_in)
+                        if check:
+                            get_password(dom_in)
+                        else:
+                            print("Problem with input, possible attack detected, please try again")
+                    except:
+                        print('Unexpected input detected! Retry.')
             elif user_input == '6':
                 repeat = False
                 exit(0)
