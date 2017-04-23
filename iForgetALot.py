@@ -134,6 +134,42 @@ class CTRFernet(object):
             raise InvalidToken
         return unpadded
 
+    def check_integrity(self, token, ttl=None):
+        # check integrity of files
+        # with our implementation, this is actually superfluous, since if the integrity is compromised, you can't get to
+        # this function. We check the integrity when we decrypt.
+        # TODO finish implementation
+        if not isinstance(token, bytes):
+            raise TypeError("token must be bytes.")
+
+        current_time = int(time.time())
+
+        try:
+            data = base64.urlsafe_b64decode(token)
+        except (TypeError, binascii.Error):
+            raise InvalidToken
+
+        if not data or six.indexbytes(data, 0) != 0x80:
+            raise InvalidToken
+
+        try:
+            timestamp, = struct.unpack(">Q", data[1:9])
+        except struct.error:
+            raise InvalidToken
+        if ttl is not None:
+            if timestamp + ttl < current_time:
+                raise InvalidToken
+
+            if current_time + _MAX_CLOCK_SKEW < timestamp:
+                raise InvalidToken
+
+        h = HMAC(self._signing_key, hashes.SHA512(), backend=self._backend)
+        h.update(data[:-64])
+        try:
+            h.verify(data[-64:])
+        except InvalidSignature:
+            raise InvalidToken
+
 
 class MultiFernet(object):
     def __init__(self, fernets):
@@ -162,20 +198,6 @@ def retrieve_key():
         old_salt = keyfiledata[:len(salt)]
         key = keyfiledata[len(salt):]
     return key
-
-def check_integrity():
-    # check integrity of files
-    # TODO finish implementation
-    with open("passwd_file", 'rb') as pass_file:
-        key = retrieve_key()
-        encoded = base64.urlsafe_b64encode(key)
-        f = CTRFernet(encoded)
-        pf = pass_file.read()
-        print(str(pf))
-        encryptedToken = f.encrypt(pf)
-        decrypted = f.decrypt(encryptedToken)
-        print(decrypted)
-    print("Checking file integrity.")
 
 
 def register_account(file, username, password, domain):
@@ -283,6 +305,15 @@ def user_input_is_good(inp):
         return True
 
 
+def check_integrity(obj, file):
+    # this function is superfluous since we check integrity when we decrypt.
+    # TODO add check for file
+    try:
+        obj.check_integrity(file)
+        print("PASSED!")
+    except:
+        print("FAILED!")
+
 def display_menu():
     print("1. Check integrity")
     print("2. Register account")
@@ -297,7 +328,7 @@ def file_decryptor(f):
         pf = pass_file.read()
         d = f.decrypt(pf)
         db = eval(d)
-        return db
+        return db, pf
 
 if __name__ == '__main__':
     # check for passwd_file and master_passwd
@@ -319,7 +350,7 @@ if __name__ == '__main__':
     f = CTRFernet(encoded)
 
     if not firstTimeFlag:
-        decrypted = file_decryptor(f)
+        decrypted, pf = file_decryptor(f)
 
     repeat = True
 
@@ -332,7 +363,7 @@ if __name__ == '__main__':
             user_input = input("Enter the function you wish to use [1-6]: ")
 
             if user_input == '1':
-                check_integrity()
+                check_integrity(f, pf)
             elif user_input == '2':
                 # print("Please enter username, password, and domain, separated by spaces")
                 while not check:
