@@ -138,7 +138,6 @@ class CTRFernet(object):
         # check integrity of files
         # with our implementation, this is actually superfluous, since if the integrity is compromised, you can't get to
         # this function. We check the integrity when we decrypt.
-        # TODO finish implementation
         if not isinstance(token, bytes):
             raise TypeError("token must be bytes.")
 
@@ -202,7 +201,6 @@ def retrieve_key():
 
 def register_account(username, password, domain):
     """Register a new account"""
-    # TODO finish implementation
     if domain in db:
         print("USER ACCOUNT ALREADY EXISTS!")
     else:
@@ -235,7 +233,6 @@ def delete_account(username, password, domain):
 
 def change_account(username, old_password, new_password, domain):
     # change the password of an account already in the manager
-    # TODO finish implementation
     if domain in db:
         (un, pw) = db[domain]
         if username == un and old_password == pw:
@@ -282,7 +279,6 @@ def exit_manager(file, f):
 
 
 def initial_registration():
-    # TODO finish implementation
     # creates master_passwd file
     with open("master_passwd", 'wb') as mass_pass_file:
         check = False
@@ -300,7 +296,6 @@ def initial_registration():
 
 
 def check_master_password(master_password):
-    # TODO finish implementation
     print("checking master password")
     key = retrieve_key()
     master_password = bytes(master_password, 'utf-8')
@@ -312,7 +307,6 @@ def check_master_password(master_password):
         exit()
 
 def user_input_is_good(inp):
-    # TODO finish implementation
     if len(inp) > 80 or len(inp) < 0 or not isinstance(inp, str):
         print("Input too long, or too short, or isn't a string. Possible attack detected. Please try again")
         return False
@@ -322,7 +316,6 @@ def user_input_is_good(inp):
 
 def check_integrity(obj, file):
     # this function is superfluous since we check integrity when we decrypt.
-    # TODO add check for file
     try:
         obj.check_integrity(file)
         print("PASSED!")
