@@ -192,8 +192,11 @@ def register_account(file, username, password, domain):
 
 def delete_account(file, username, password, domain):
     # delete account
-    # TODO finish implementation
-    print("Deleting account.")
+    if domain in db:
+        del db[domain]
+        print('Site ' + domain + ' deleted.')
+    else:
+        print('Error: Site ' + domain + ' not found.')
 
 
 def change_account(file, username, old_password, new_password, domain):
@@ -204,8 +207,12 @@ def change_account(file, username, old_password, new_password, domain):
 
 def get_password(file, domain):
     # get a password for an account in the manager
-    # TODO finish implementation
     print("Retrieving password.")
+    if domain in db:
+        un, pw = db[domain]
+        print('username ' + un + ' password ' + pw)
+    else:
+        print('Error: Site ' + domain + ' not found.')
 
 
 def exit_manager(file, f):
@@ -216,8 +223,9 @@ def exit_manager(file, f):
         exit()
     else:
         with open("passwd_file", 'wb') as pass_file:
-            # encrypted = f.encrypt(file)
-            encrypted = f.encrypt(b"TEST")
+            stringDB = str(db)
+            bytesDB = bytes(stringDB, 'utf-8')
+            encrypted = f.encrypt(bytesDB)
             pass_file.write(encrypted)
     print("Exiting program. Goodbye.")
 
@@ -238,7 +246,6 @@ def initial_registration():
     # creates passwd_file
     with open("passwd_file", 'wb') as pass_file:
         pass
-
 
 
 def check_master_password(master_password):
@@ -274,7 +281,9 @@ def display_menu():
 def file_decryptor(f):
     with open("passwd_file", 'rb') as pass_file:
         pf = pass_file.read()
-        return f.decrypt(pf)
+        d = f.decrypt(pf)
+        db = eval(d)
+        return db
 
 if __name__ == '__main__':
     # check for passwd_file and master_passwd
