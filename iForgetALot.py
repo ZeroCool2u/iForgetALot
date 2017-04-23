@@ -233,8 +233,6 @@ def get_password(file, domain):
 
 def exit_manager(file, f):
     # exit the program
-    # TODO finish implementation
-    # TODO encrypt file
     if f == None:
         exit()
     else:
@@ -278,8 +276,8 @@ def check_master_password(master_password):
 
 def user_input_is_good(inp):
     # TODO finish implementation
-    if len(inp) > 80:
-        print("Input too long, possible attack detected. Please try again")
+    if len(inp) > 80 or len(inp) < 0 or not isinstance(inp, str):
+        print("Input too long, or too short, or isn't a string. Possible attack detected. Please try again")
         return False
     else:
         return True
@@ -377,5 +375,7 @@ if __name__ == '__main__':
             elif user_input == '6':
                 repeat = False
                 exit_manager(db, f)
+            elif user_input == '7':
+                print('THIS IS AN EASTER EGG. HOWEVER IT IS NOT CHOCOLATE AND THERE IS NO EGG. SORRY.')
             else:
                 input("Selection error. Press any key to try again.")
